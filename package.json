@@ -1,0 +1,26 @@
+{
+  "name": "fast-food-payment",
+  "version": "1.0.0",
+  "description": "Fast Food Payment Management Service - AWS Lambda",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "bash build-package.sh",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "dependencies": {
+    "mysql2": "^3.6.5"
+  },
+  "engines": {
+    "node": ">=18.x"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "fast-food",
+    "payment",
+    "mysql",
+    "rds"
+  ],
+  "author": "Fast Food Team",
+  "license": "MIT"
+}
