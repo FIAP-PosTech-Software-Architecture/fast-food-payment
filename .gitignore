@@ -1,0 +1,27 @@
+/dist
+/node_modules
+/build
+.DS_Store
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Terraform
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/*.tfvars
+terraform/*.tfvars.json
+
+# Kubernetes secrets
+kubeconfig
+*.kubeconfig
+
+# Copilot instructions (development only)
+.github/copilot-instructions.md
+
+# Coverage
+coverage/
