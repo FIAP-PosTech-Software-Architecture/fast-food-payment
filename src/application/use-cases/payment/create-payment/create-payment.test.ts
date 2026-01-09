@@ -7,6 +7,10 @@ import { ICreatePayment } from '#/domain/gateways/payment/create-payment';
 import * as paymentMock from '#/infrastructure/repositories/prisma/mocks/prisma-payment-mock.repository';
 import { createLoggerMock } from '#/infrastructure/services/mocks/logger-mock.service';
 
+vi.mock('crypto', () => ({
+    randomUUID: () => '1',
+}));
+
 describe('create-payment', () => {
     const createPaymentGatewayMock = (): ICreatePayment => ({
         execute: vi.fn(),
@@ -44,7 +48,7 @@ describe('create-payment', () => {
             ],
         };
 
-        const qrCodeResponse = 'qr-code-mock-data';
+        const qrCodeResponse = 'qr-code-data';
         vi.spyOn(paymentGateway, 'execute').mockResolvedValueOnce(qrCodeResponse);
 
         const createMock = paymentMock.mockPaymentCreate();
@@ -56,12 +60,13 @@ describe('create-payment', () => {
         expect(result.qrCode).toBe(qrCodeResponse);
         expect(paymentGateway.execute).toHaveBeenCalledWith(
             expect.objectContaining({
-                external_reference: result.id,
+                external_reference: '1',
                 total_amount: 2599,
                 items: expect.arrayContaining([
                     expect.objectContaining({
                         sku_number: 'product-1',
                         category: 'Beverages',
+                        description: 'Refreshing beverage',
                         title: 'Coca-Cola',
                         quantity: 2,
                         unit_price: 599,
@@ -70,6 +75,7 @@ describe('create-payment', () => {
                     expect.objectContaining({
                         sku_number: 'product-2',
                         category: 'Food',
+                        description: 'Delicious burger',
                         title: 'Burger',
                         quantity: 1,
                         unit_price: 1401,
@@ -111,7 +117,7 @@ describe('create-payment', () => {
             ],
         };
 
-        const qrCodeResponse = 'qr-code-single-product';
+        const qrCodeResponse = 'qr-code-data';
         vi.spyOn(paymentGateway, 'execute').mockResolvedValueOnce(qrCodeResponse);
         paymentMock.mockPaymentCreate();
 

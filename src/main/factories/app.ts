@@ -1,4 +1,5 @@
 import fastifySwagger from '@fastify/swagger';
+import fastifySwaggerUi from '@fastify/swagger-ui';
 import fastify, { FastifyInstance } from 'fastify';
 import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 
@@ -29,6 +30,10 @@ export async function createApp(): Promise<FastifyInstance> {
             ],
         },
         transform: jsonSchemaTransform,
+    });
+
+    app.register(fastifySwaggerUi, {
+        routePrefix: '/docs',
     });
 
     app.register(paymentRoute, { prefix: '/payment' });

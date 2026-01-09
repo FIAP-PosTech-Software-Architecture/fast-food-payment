@@ -5,7 +5,7 @@
     "main": "src/main/index.js",
     "author": "Grupo 277",
     "scripts": {
-        "build": "npm run build:clean && tsc",
+        "build": "npm run build:clean && tsc -p tsconfig.build.json",
         "build:clean": "rimraf dist",
         "dev": "tsx watch src/main/index.ts",
         "start": "npm run build && node dist/main/index.js",

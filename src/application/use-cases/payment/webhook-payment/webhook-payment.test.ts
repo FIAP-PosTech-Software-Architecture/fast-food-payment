@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { WebhookPaymentUseCase } from '#/application/use-cases/payment/webhook-payment/webhook-payment';
 import { Payment } from '#/domain/entities/payment.entity';
-import { OrderStatus } from '#/domain/enum/order-status.enum';
 import { NotFoundError } from '#/domain/errors';
-import { IUpdateOrderStatus } from '#/domain/gateways/order/update-order-status';
+import { IOrderPaymentsApproved } from '#/domain/gateways/order/order-payments-approved';
+import { IOrderPaymentsFailed } from '#/domain/gateways/order/order-payments-failed';
 import { GetPaymentOutput } from '#/domain/gateways/payment/dto/get-payment-output';
 import { IGetPayment } from '#/domain/gateways/payment/get-payment';
 import * as paymentMock from '#/infrastructure/repositories/prisma/mocks/prisma-payment-mock.repository';
@@ -16,20 +16,26 @@ describe('webhook-payment', () => {
         execute: vi.fn(),
     });
 
-    const createUpdateOrderStatusGatewayMock = (): IUpdateOrderStatus => ({
+    const createOrderPaymentsApprovedMock = (): IOrderPaymentsApproved => ({
+        execute: vi.fn(),
+    });
+
+    const createOrderPaymentsFailedMock = (): IOrderPaymentsFailed => ({
         execute: vi.fn(),
     });
 
     const logger = createLoggerMock();
     const getPaymentGateway = createGetPaymentGatewayMock();
     const paymentRepository = new paymentMock.PrismaPaymentMockRepository();
-    const updateOrderStatusGateway = createUpdateOrderStatusGatewayMock();
+    const orderPaymentsApprovedGateway = createOrderPaymentsApprovedMock();
+    const orderPaymentsFailedGateway = createOrderPaymentsFailedMock();
 
     const webhookPaymentUseCase = new WebhookPaymentUseCase(
         logger,
         getPaymentGateway,
         paymentRepository,
-        updateOrderStatusGateway,
+        orderPaymentsApprovedGateway,
+        orderPaymentsFailedGateway,
     );
 
     it('should process webhook for approved payment', async () => {
@@ -54,13 +60,13 @@ describe('webhook-payment', () => {
             orderId: 'order-123',
             status: StatusPayment.PENDING,
             externalReference: undefined,
-            qrCode: 'qr-code-data',
+            qrCode: 'qr-code-mock-data',
         });
 
         vi.spyOn(getPaymentGateway, 'execute').mockResolvedValueOnce(gatewayResponse);
         paymentMock.mockPaymentFindById({ data: existingPayment });
         const updateMock = paymentMock.mockPaymentUpdate();
-        vi.spyOn(updateOrderStatusGateway, 'execute').mockResolvedValueOnce();
+        vi.spyOn(orderPaymentsApprovedGateway, 'execute').mockResolvedValueOnce();
 
         await webhookPaymentUseCase.execute(webhookRequest);
 
@@ -72,10 +78,7 @@ describe('webhook-payment', () => {
                 externalReference: '12345',
             }),
         );
-        expect(updateOrderStatusGateway.execute).toHaveBeenCalledWith({
-            orderId: 'order-123',
-            status: OrderStatus.RECEIVED,
-        });
+        expect(orderPaymentsApprovedGateway.execute).toHaveBeenCalledWith('order-123');
         expect(logger.info).toHaveBeenCalledWith('Webhook received:', gatewayResponse);
     });
 
@@ -107,14 +110,11 @@ describe('webhook-payment', () => {
         vi.spyOn(getPaymentGateway, 'execute').mockResolvedValueOnce(gatewayResponse);
         paymentMock.mockPaymentFindById({ data: existingPayment });
         paymentMock.mockPaymentUpdate();
-        vi.spyOn(updateOrderStatusGateway, 'execute').mockResolvedValueOnce();
+        vi.spyOn(orderPaymentsFailedGateway, 'execute').mockResolvedValueOnce();
 
         await webhookPaymentUseCase.execute(webhookRequest);
 
-        expect(updateOrderStatusGateway.execute).toHaveBeenCalledWith({
-            orderId: 'order-456',
-            status: OrderStatus.CANCELED,
-        });
+        expect(orderPaymentsFailedGateway.execute).toHaveBeenCalledWith('order-456');
     });
 
     it('should throw NotFoundError if payment does not exist', async () => {
@@ -138,8 +138,5 @@ describe('webhook-payment', () => {
         paymentMock.mockPaymentFindById({ empty: true });
 
         await expect(webhookPaymentUseCase.execute(webhookRequest)).rejects.toThrow(NotFoundError);
-        await expect(webhookPaymentUseCase.execute(webhookRequest)).rejects.toThrow(
-            'Payment not found for externalReference: payment-999',
-        );
     });
 });

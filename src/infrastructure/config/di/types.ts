@@ -14,7 +14,8 @@ export const TYPES = {
     WebhookUseCase: Symbol.for('WebhookUseCase'),
 
     // Gateway
-    UpdateOrderStatusGateway: Symbol.for('UpdateOrderStatusGateway'),
+    OrderPaymentsApprovedGateway: Symbol.for('OrderPaymentsApprovedGateway'),
+    OrderPaymentsFailedGateway: Symbol.for('OrderPaymentsFailedGateway'),
     CreatePaymentGateway: Symbol.for('CreatePaymentGateway'),
     GetPaymentGateway: Symbol.for('GetPaymentGateway'),
 

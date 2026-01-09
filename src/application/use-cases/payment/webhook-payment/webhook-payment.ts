@@ -2,9 +2,9 @@ import { StatusPayment } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 
 import { IWebhookPaymentUseCase } from '#/application/use-cases/payment/webhook-payment/webhook-payment.use-case';
-import { OrderStatus } from '#/domain/enum/order-status.enum';
 import { NotFoundError } from '#/domain/errors';
-import { IUpdateOrderStatus } from '#/domain/gateways/order/update-order-status';
+import { IOrderPaymentsApproved } from '#/domain/gateways/order/order-payments-approved';
+import { IOrderPaymentsFailed } from '#/domain/gateways/order/order-payments-failed';
 import { IGetPayment } from '#/domain/gateways/payment/get-payment';
 import { IPaymentRepository } from '#/domain/repositories/payment.repository';
 import { ILogger } from '#/domain/services/logger.service';
@@ -17,19 +17,14 @@ const statusPayment: Record<string, StatusPayment> = {
     rejected: StatusPayment.REJECTED,
 };
 
-const orderStatus: Record<string, OrderStatus> = {
-    pending: OrderStatus.WAITING,
-    approved: OrderStatus.RECEIVED,
-    rejected: OrderStatus.CANCELED,
-};
-
 @injectable()
 export class WebhookPaymentUseCase implements IWebhookPaymentUseCase {
     constructor(
         @inject(TYPES.Logger) private readonly logger: ILogger,
         @inject(TYPES.GetPaymentGateway) private readonly getPaymentGateway: IGetPayment,
         @inject(TYPES.PaymentRepository) private readonly paymentRepository: IPaymentRepository,
-        @inject(TYPES.UpdateOrderStatusGateway) private readonly updateOrderStatusGateway: IUpdateOrderStatus,
+        @inject(TYPES.OrderPaymentsApprovedGateway) private readonly orderPaymentsApproved: IOrderPaymentsApproved,
+        @inject(TYPES.OrderPaymentsFailedGateway) private readonly orderPaymentsFailed: IOrderPaymentsFailed,
     ) {}
 
     async execute(request: PaymentWebhookRequest): Promise<void> {
@@ -45,9 +40,14 @@ export class WebhookPaymentUseCase implements IWebhookPaymentUseCase {
         payment.externalReference = String(gateway.id);
         await this.paymentRepository.update(payment.id, payment);
 
-        await this.updateOrderStatusGateway.execute({
-            orderId: payment.orderId,
-            status: orderStatus[gateway.status],
-        });
+        if (gateway.status === 'approved') {
+            this.logger.info('Processing approved payment for order', { orderId: payment.orderId });
+            await this.orderPaymentsApproved.execute(payment.orderId);
+        } else if (gateway.status === 'rejected') {
+            this.logger.info('Processing failed payment for order', { orderId: payment.orderId });
+            await this.orderPaymentsFailed.execute(payment.orderId);
+        } else {
+            this.logger.warn('Unhandled payment status', { gatewayStatus: gateway.status });
+        }
     }
 }
