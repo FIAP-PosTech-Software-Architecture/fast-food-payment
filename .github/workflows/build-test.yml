@@ -2,7 +2,7 @@ name: 'CI - Build and Test'
 
 on:
   pull_request:
-    branches: [main]
+    branches: [modulo_4]
     paths:
       - 'src/**'
       - 'package.json'
@@ -57,6 +57,6 @@ jobs:
       uses: trufflesecurity/trufflehog@main
       with:
         path: ./
-        base: main
+        base: modulo_4
         head: HEAD
         extra_args: --debug --only-verified
