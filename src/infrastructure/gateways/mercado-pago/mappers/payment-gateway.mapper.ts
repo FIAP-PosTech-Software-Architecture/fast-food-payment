@@ -17,8 +17,8 @@ export class PaymentGatewayMapper {
                 unit_price: item.unitPrice,
                 total_amount: item.subtotal,
             })),
-            title: 'Compra em fast-food',
-            description: 'Compra em fast-food',
+            title: 'Pedido em Fast-Food',
+            description: `${request.orderProducts.length} itens - Total: R$ ${request.totalAmount.toFixed(2)}`,
         };
     }
 }
