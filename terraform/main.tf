@@ -126,16 +126,90 @@ locals {
   }
 }
 
-# Lambda Function
+# ===========================
+# S3 BUCKET FOR LARGE DEPLOYMENTS  
+# ===========================
+
+# Random suffix para nome único do bucket
+resource "random_string" "bucket_suffix" {
+  length  = 8
+  special = false
+  upper   = false
+}
+
+# Bucket para armazenar pacotes de deployment (SEMPRE via S3)
+resource "aws_s3_bucket" "lambda_deployments" {
+  bucket = "fastfood-lambda-deployments-payment-${random_string.bucket_suffix.result}"
+  
+  tags = {
+    Name = "fastfood-lambda-deployments-payment"
+    Service = "payment"
+    Component = "deployment"
+    ManagedBy = "terraform"
+    Purpose = "lambda-packages"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "lambda_deployments" {
+  bucket = aws_s3_bucket.lambda_deployments.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Configuração de criptografia para o bucket
+resource "aws_s3_bucket_server_side_encryption_configuration" "lambda_deployments" {
+  bucket = aws_s3_bucket.lambda_deployments.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Bloquear acesso público ao bucket
+resource "aws_s3_bucket_public_access_block" "lambda_deployments" {
+  bucket = aws_s3_bucket.lambda_deployments.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# Upload do pacote Lambda para S3 (SEMPRE via S3 - sem limite de tamanho)
+resource "aws_s3_object" "lambda_package" {
+  bucket = aws_s3_bucket.lambda_deployments.id
+  key    = "fast-food-payment-${filemd5(var.lambda_filename)}.zip"
+  source = var.lambda_filename
+  etag   = filemd5(var.lambda_filename)
+  
+  metadata = {
+    service = "fast-food-payment"
+    deployment_method = "s3-upload"
+    created_by = "terraform"
+  }
+  
+  tags = {
+    Service = "payment"
+    Component = "lambda-package"
+    ManagedBy = "terraform"
+  }
+}
+
+# Lambda Function - SEMPRE usa S3 (sem limite de tamanho)
+# Não utiliza 'filename' para evitar o limite de 50MB do upload direto
 resource "aws_lambda_function" "main" {
-  filename         = var.lambda_filename
-  function_name    = var.lambda_function_name
-  role            = data.aws_iam_role.lab_role.arn
-  handler         = var.lambda_handler
-  source_code_hash = filebase64sha256(var.lambda_filename)
-  runtime         = var.lambda_runtime
-  timeout         = var.lambda_timeout
-  memory_size     = var.lambda_memory_size
+  # Usar S3 em vez de filename para arquivos grandes
+  s3_bucket        = aws_s3_bucket.lambda_deployments.id
+  s3_key          = aws_s3_object.lambda_package.key
+  function_name   = var.lambda_function_name
+  role           = data.aws_iam_role.lab_role.arn
+  handler        = var.lambda_handler
+  runtime        = var.lambda_runtime
+  timeout        = var.lambda_timeout
+  memory_size    = var.lambda_memory_size
 
   environment {
     variables = local.database_config
@@ -148,6 +222,7 @@ resource "aws_lambda_function" "main" {
   }
 
   depends_on = [
+    aws_s3_object.lambda_package,
     aws_cloudwatch_log_group.lambda_logs
   ]
 }
