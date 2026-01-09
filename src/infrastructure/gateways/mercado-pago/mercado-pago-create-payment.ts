@@ -25,27 +25,25 @@ export class MercadoPagoCreatePayment implements ICreatePayment {
             const externalPosId = env.MERCADO_PAGO_POS_ID;
 
             const url = `${this.baseUrl}/instore/orders/qr/seller/collectors/${userId}/pos/${externalPosId}/qrs`;
-            const response = await this.httpClient.post<any, any>(url, {
-                external_reference: request.external_reference,
-                notification_url: env.MERCADO_PAGO_NOTIFICATION_URL,
-                total_amount: request.total_amount,
-                items: request.items.map(item => ({
-                    sku_number: item.sku_number,
-                    category: item.category,
-                    title: item.title,
-                    description: item.description,
-                    quantity: item.quantity,
-                    unit_measure: 'unit',
-                    unit_price: item.unit_price,
-                    total_amount: item.total_amount,
-                })),
-                title: 'Compra em fast-food',
-                description: 'Compra em fast-food',
-            });
+            const response = await this.httpClient.post<any, any>(
+                url,
+                {
+                    ...request,
+                    notification_url: env.MERCADO_PAGO_NOTIFICATION_URL,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${env.MERCADO_PAGO_TOKEN}`,
+                        'Content-Type': 'application/json',
+                    },
+                },
+            );
+
+            console.log('AQUI', response);
 
             this.logger.info('Payment created successfully in Mercado Pago', { request });
 
-            return response.data.qr_data as string;
+            return response.qr_data as string;
         } catch (error) {
             const axiosError = error as AxiosError;
 
