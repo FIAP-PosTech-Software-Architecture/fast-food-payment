@@ -63,3 +63,24 @@ output "environment_variables" {
   }
   sensitive = false
 }
+
+# S3 Deployment Bucket outputs
+output "s3_deployment_bucket_name" {
+  description = "Name of the S3 bucket used for Lambda deployment packages"
+  value       = aws_s3_bucket.lambda_deployments.bucket
+}
+
+output "s3_deployment_bucket_arn" {
+  description = "ARN of the S3 bucket used for Lambda deployment packages"
+  value       = aws_s3_bucket.lambda_deployments.arn
+}
+
+output "lambda_package_s3_key" {
+  description = "S3 key of the current Lambda deployment package"
+  value       = aws_s3_object.lambda_package.key
+}
+
+output "deployment_method" {
+  description = "Method used for Lambda deployment"
+  value       = "S3 Upload - Always uses S3 regardless of package size"
+}
