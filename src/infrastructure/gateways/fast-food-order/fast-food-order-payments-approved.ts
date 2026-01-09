@@ -17,10 +17,12 @@ export class FastFoodOrderPaymentsApproved implements IOrderPaymentsApproved {
 
     async execute(orderId: string): Promise<void> {
         try {
+            console.log('ORDER_ID', orderId);
             this.logger.info('Updating order payments approved status in fast-food-order service', { orderId });
 
             const url = `${this.baseUrl}/order/${orderId}/approved`;
-            await this.httpClient.post<any, any>(url);
+            console.log('URL', url);
+            await this.httpClient.post<any, any>(url, {});
 
             this.logger.info('Order payments approved status updated successfully in fast-food-order service', {
                 orderId,

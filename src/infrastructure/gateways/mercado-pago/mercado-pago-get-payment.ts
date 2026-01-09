@@ -22,14 +22,21 @@ export class MercadoPagoGetPayment implements IGetPayment {
             this.logger.info('Getting payment in Mercado Pago', { paymentId });
 
             const url = `${this.baseUrl}/v1/payments/${paymentId}`;
-            const response = await this.httpClient.get<any>(url);
+            const response = await this.httpClient.get<any>(url, {
+                headers: {
+                    Authorization: `Bearer ${env.MERCADO_PAGO_TOKEN}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            console.log('AQUI', response);
 
             this.logger.info('Payment retrieved successfully in Mercado Pago', { paymentId });
 
             return {
-                externalReference: response.data.external_reference,
-                status: response.data.status,
-                id: response.data.id,
+                externalReference: response.external_reference,
+                status: response.status,
+                id: response.id,
             };
         } catch (error) {
             const axiosError = error as AxiosError;
