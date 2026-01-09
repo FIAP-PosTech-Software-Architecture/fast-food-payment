@@ -20,7 +20,7 @@ export class FastFoodOrderPaymentsFailed implements IOrderPaymentsFailed {
             this.logger.info('Updating order payments failed status in fast-food-order service', { orderId });
 
             const url = `${this.baseUrl}/order/${orderId}/failed`;
-            await this.httpClient.post<any, any>(url);
+            await this.httpClient.post<any, any>(url, {});
 
             this.logger.info('Order payments failed status updated successfully in fast-food-order service', {
                 orderId,
