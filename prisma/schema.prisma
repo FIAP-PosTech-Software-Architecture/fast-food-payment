@@ -1,0 +1,27 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+model Payment {
+    id                String        @id
+    orderId           String        @db.Char(36)
+    status            StatusPayment @default(PENDING)
+    externalReference String?       @map("external_reference") @db.VarChar(100)
+    qrCode            String?       @map("qr_code")
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("payment")
+}
+
+enum StatusPayment {
+    PENDING
+    APPROVED
+    REJECTED
+}
