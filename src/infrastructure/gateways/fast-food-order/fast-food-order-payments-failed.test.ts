@@ -33,7 +33,7 @@ describe('FastFoodOrderPaymentsFailed', () => {
 
         await gateway.execute('order-123');
 
-        expect(httpClientMock.post).toHaveBeenCalledWith('http://localhost:3000/order/order-123/failed');
+        expect(httpClientMock.post).toHaveBeenCalledWith('http://localhost:3000/order/order-123/failed', {});
         expect(loggerMock.info).toHaveBeenCalledWith(
             'Order payments failed status updated successfully in fast-food-order service',
             { orderId: 'order-123' },

@@ -47,8 +47,8 @@ describe('PaymentGatewayMapper', () => {
                         total_amount: 3198,
                     },
                 ],
-                title: 'Compra em fast-food',
-                description: 'Compra em fast-food',
+                title: 'Pedido em Fast-Food',
+                description: '1 itens - Total: R$ 3198.00',
             });
         });
 

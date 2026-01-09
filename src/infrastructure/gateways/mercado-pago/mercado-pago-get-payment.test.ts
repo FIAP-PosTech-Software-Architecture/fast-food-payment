@@ -6,7 +6,10 @@ import { MercadoPagoGetPayment } from '#/infrastructure/gateways/mercado-pago/me
 import { createLoggerMock } from '#/infrastructure/services/mocks/logger-mock.service';
 
 vi.mock('#/infrastructure/config/env', () => ({
-    env: { MERCADO_PAGO_BASE_URL: 'https://api.mercadopago.com' },
+    env: {
+        MERCADO_PAGO_BASE_URL: 'https://api.mercadopago.com',
+        MERCADO_PAGO_TOKEN: 'test-token',
+    },
 }));
 
 describe('MercadoPagoGetPayment', () => {
@@ -30,11 +33,9 @@ describe('MercadoPagoGetPayment', () => {
 
     it('should get payment successfully', async () => {
         const mockResponse = {
-            data: {
-                id: '123456789',
-                external_reference: 'payment-123',
-                status: 'approved',
-            },
+            id: '123456789',
+            external_reference: 'payment-123',
+            status: 'approved',
         };
         vi.spyOn(httpClientMock, 'get').mockResolvedValueOnce(mockResponse);
 
@@ -45,7 +46,13 @@ describe('MercadoPagoGetPayment', () => {
             externalReference: 'payment-123',
             status: 'approved',
         });
-        expect(httpClientMock.get).toHaveBeenCalledWith('https://api.mercadopago.com/v1/payments/123456789');
+        expect(httpClientMock.get).toHaveBeenCalledWith('https://api.mercadopago.com/v1/payments/123456789', {
+            headers: {
+                Authorization: 'Bearer test-token',
+                'Content-Type': 'application/json',
+            },
+        });
+        expect(loggerMock.info).toHaveBeenCalledWith('Getting payment in Mercado Pago', { paymentId: '123456789' });
         expect(loggerMock.info).toHaveBeenCalledWith('Payment retrieved successfully in Mercado Pago', {
             paymentId: '123456789',
         });
