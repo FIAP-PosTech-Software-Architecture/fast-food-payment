@@ -6,6 +6,5 @@ reports
 .env
 *.zip
 .idea/
-coverage
 .docker
 test-report
