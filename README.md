@@ -183,6 +183,8 @@ Os testes cobrem:
 - ✅ Transições de status
 - ✅ Validações de negócio
 
+O coverage dos testes está disponível em [index.html](./coverage/index.html).
+
 ## 📡 API Endpoints
 
 ### POST /payments
