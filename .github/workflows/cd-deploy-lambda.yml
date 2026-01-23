@@ -1,6 +1,8 @@
 name: CD - Deploy Lambda Payment
 
 on:
+  repository_dispatch:
+    types: [deploy-lambda]
   push:
     branches: [ modulo_4 ]
     paths:
@@ -36,21 +38,24 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: Install and build
+      - name: Build package
         run: |
-          npm ci
-          npm run build
-          npm run build:package
+          chmod +x ./build-package.sh
+          ./build-package.sh
 
-      - name: Deploy Lambda
-        run: |
-          aws lambda update-function-code \
-            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
-            --zip-file fileb://lambda-deployment.zip \
-            --region ${{ env.AWS_REGION }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
 
-          aws lambda wait function-updated \
-            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
-            --region ${{ env.AWS_REGION }}
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
 
-          echo "✅ Lambda deployed successfully!"
+      - name: Terraform Apply
+        working-directory: ./terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        run: terraform apply -auto-approve
