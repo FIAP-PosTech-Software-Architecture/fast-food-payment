@@ -1,6 +1,8 @@
 name: CD - Deploy Lambda Payment
 
 on:
+  repository_dispatch:
+    types: [deploy-lambda]
   push:
     branches: [ modulo_4 ]
     paths:
