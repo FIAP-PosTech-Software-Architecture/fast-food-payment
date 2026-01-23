@@ -85,6 +85,6 @@ export default [
         },
     },
     {
-        ignores: ['dist', 'docs', 'node_modules', 'eslint.config.mjs', 'prisma/**/*'],
+        ignores: ['dist', 'docs', 'node_modules', 'eslint.config.mjs', 'prisma/**/*', 'tsup.config.ts'],
     }
 ];
